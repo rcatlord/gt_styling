@@ -1,0 +1,820 @@
+---
+title: "gt styling"
+format: 
+  html:
+    toc: true
+    toc-depth: 3
+    toc-title: "Contents"
+    highlight-style: a11y
+    link-external-newwindow: true
+    embed-resources: true
+    grid:
+      sidebar-width: 300px
+      body-width: 900px
+      margin-width: 300px
+      gutter-width: 1.5rem
+    theme: lux
+execute: 
+  message: false
+  warning: false
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| label: load-packages
+#| include: FALSE
+
+library(tidyverse) ; library(gt)
+```
+
+
+```{r}
+#| label: load-data
+#| echo: FALSE
+
+df <- countrypops |> 
+  filter(country_code_3 %in% c("DZA","BHR","COM","DJI","EGY","IRQ","JOR","KWT",
+                               "LBN","LBY","MRT","MAR","OMN","PSE","QAT","SAU",
+                               "SOM","SDN","SYR","TUN","ARE","YEM")) |>
+  select(country_name, year, population) |>
+  filter(year %in% c(2012,2022)) |>
+  pivot_wider(
+    names_from = "year",
+    values_from = "population"
+  ) |>
+  mutate(government = case_when(
+    country_name %in% c("Bahrain","Jordan","Kuwait","Morocco","Oman","Qatar","Saudi Arabia","United Arab Emirates") ~ "Monarchy",
+    TRUE ~ "Republic"
+  ),
+  change = (`2022`-`2012`)/`2012`) |> 
+  relocate(government, .after = country_name) |> 
+  arrange(desc(change))
+```
+
+This document shows some of the ways that you can format and style tables created using the [**`gt`**](https://gt.rstudio.com) R package.
+
+```{r}
+#| label: tbl-unstyled
+#| tbl-cap: "Unstyled"
+#| include: FALSE
+
+tbl <- df |> 
+  gt(rowname_col = "country_name",
+     groupname_col = "government") |> 
+  tab_stubhead(label = "Government type") |>
+  cols_label(change = "Change") |> 
+  tab_spanner(columns = c(`2012`,`2022`), label = "Year") |>
+  fmt_number(columns = c(`2012`,`2022`), decimals = 2, suffixing = TRUE) |> 
+  fmt_percent(columns = change, decimals = 1) |> 
+  summary_rows(
+    columns = c(`2012`, `2022`),
+    fns = list(Total = ~ sum(.)), 
+    fmt = ~ fmt_number(., decimals = 1, suffixing = TRUE)
+  ) |>
+  summary_rows(
+    groups = everything(),
+    columns = "change",
+    fns = list(Total = ~ ((sum(`2022`) - sum(`2012`)) / sum(`2012`))),
+    fmt = ~ fmt_percent(., decimals = 1)
+  ) |> 
+  grand_summary_rows(
+    columns = c(`2012`, `2022`),
+    fns =  list(label = "Grand Total", id = "total", fn = "sum"),
+    fmt = ~ fmt_number(., decimals = 2, suffixing = TRUE)
+  ) |> 
+  grand_summary_rows(
+    columns = "change",
+    fns = list("Grand Total" = ~ ((sum(`2022`) - sum(`2012`)) / sum(`2012`))),
+    fmt = ~ fmt_percent(., decimals = 1)
+  ) |> 
+  tab_header(title = "Population of countries belonging to the League of Arab States") |> 
+  #opt_table_lines("none") |> 
+  tab_options(
+    table.font.size = px(10),
+    data_row.padding = px(2)
+    )
+```
+
+**`gt`** tables have a clearly articulated structure as shown in the syntax used in @fig-gt.
+
+```{r}
+#| label: fig-gt
+#| fig-align: left
+#| fig-cap: "Source: gt.rstudio.com"
+#| echo: FALSE
+knitr::include_graphics("https://gt.rstudio.com/reference/figures/gt_parts_of_a_table.svg")
+```
+
+A **`gt`** table can be styled by targeting parts such as the **Spanner** or **Stubhead** by using the corresponding [`helper` functions](https://gt.rstudio.com/reference/index.html#helper-functions). We will generally apply formatting and styles to these table `locations` using the [`tab_style()`](https://gt.rstudio.com/reference/tab_style.html) or [`tab_options()`](https://gt.rstudio.com/reference/tab_options.html) functions.
+
+## Typeface
+
+::: {.panel-tabset}
+### Title
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  tab_style(
+      style = cell_text(
+        font = list(
+          google_font(name = "Walter Turncoat"))
+        ),
+      locations = cells_title(groups = "title")
+      )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  tab_style(
+      style = cell_text(
+        font = list(
+          google_font(name = "Walter Turncoat"))
+        ),
+      locations = cells_title(groups = "title")
+      )
+```
+:::
+:::
+
+### Column labels
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(
+      font = google_font("Playfair"), 
+      weight = "bold",
+      size = px(20)
+      ),
+    locations = cells_column_labels(everything())
+  )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(
+      font = google_font("Playfair"), 
+      weight = "bold",
+      size = px(20)
+      ),
+    locations = cells_column_labels(everything())
+  )
+```
+:::
+:::
+
+### Cells
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(
+      font = google_font("Roboto Mono")),
+    locations = cells_body(columns = everything())
+  )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(
+      font = google_font("Roboto Mono")),
+    locations = cells_body(columns = everything())
+  )
+```
+:::
+:::
+
+### Table
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  opt_table_font(font = google_font("Source Sans Pro"))
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  opt_table_font(font = google_font("Source Sans Pro"))
+```
+:::
+:::
+:::
+
+## Font
+
+::: {.panel-tabset}
+### Stub head label
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_stubhead()
+  )
+```
+:::
+
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_stubhead()
+  )
+```
+:::
+:::
+
+### Row group labels
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  tab_options(row_group.font.weight = "bold")
+```
+:::
+
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  tab_options(row_group.font.weight = "bold")
+```
+:::
+:::
+
+### Column labels
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(style = "italic"),
+    locations = cells_column_labels(columns = everything())
+  )
+```
+:::
+
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(style = "italic"),
+    locations = cells_column_labels(columns = everything())
+  )
+```
+:::
+:::
+
+### Spanner labels
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(color =	"#756bb1", weight = "bold"),
+    locations = cells_column_spanners()
+  )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(color =	"#756bb1", weight = "bold"),
+    locations = cells_column_spanners()
+  )
+```
+:::
+:::
+
+### Column and spanner labels
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  tab_options(column_labels.font.weight = "bold")
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  tab_options(column_labels.font.weight = "bold")
+```
+:::
+:::
+
+### Cells
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_body(columns = "change")
+  )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = cells_body(columns = "change")
+  )
+```
+:::
+:::
+
+### Summary row
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = list(cells_stub_summary(),
+                     cells_summary())
+  )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = list(cells_stub_summary(),
+                     cells_summary())
+  )
+```
+:::
+:::
+
+### Grand Summary row
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |>  
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = list(cells_stub_grand_summary(),
+                     cells_grand_summary())
+    )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |>  
+  tab_style(
+    style = cell_text(weight = "bold"),
+    locations = list(cells_stub_grand_summary(),
+                     cells_grand_summary())
+    )
+```
+:::
+:::
+:::
+
+## Alignment
+::: {.panel-tabset}
+### Stub head label
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(align = "center", v_align = "middle"),
+    locations = cells_stubhead()
+  )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(align = "center", v_align = "middle"),
+    locations = cells_stubhead()
+  )
+```
+:::
+:::
+
+### Column label
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(align = "center"),
+    locations = cells_column_labels(columns = everything())
+    )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(align = "center"),
+    locations = cells_column_labels(columns = everything())
+  )
+```
+:::
+:::
+:::
+
+## Width
+::: {.panel-tabset}
+### Column
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  cols_width(
+    country_name ~ px(180),
+    everything() ~ px(60)
+)
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  cols_width(
+    country_name ~ px(120),
+    everything() ~ px(60)
+)
+```
+:::
+:::
+
+### Table
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  tab_options(
+    table.width = pct(50)
+  )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  tab_options(
+    table.width = pct(50)
+  )
+```
+:::
+:::
+:::
+
+## Borders
+::: {.panel-tabset}
+### Stub
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  opt_table_lines("none") |> 
+  tab_options(
+    stub.border.style = "solid",
+    stub.border.width = px(2),
+    stub.border.color = "#000000"
+  )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  opt_table_lines("none") |> 
+  tab_options(
+    stub.border.style = "solid",
+    stub.border.width = px(2),
+    stub.border.color = "#000000"
+  )
+```
+:::
+:::
+
+### Row group
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+   opt_table_lines("none") |> 
+  tab_style(
+    style = cell_borders(sides = "bottom", color = "#000000", weight = px(2)),
+    locations = cells_row_groups()
+  )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  opt_table_lines("none") |> 
+  tab_style(
+    style = cell_borders(sides = "bottom", color = "#000000", weight = px(2)),
+    locations = cells_row_groups()
+  )
+```
+:::
+:::
+
+### Column labels
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  opt_table_lines("none") |> 
+  tab_style(
+  style = cell_borders(sides = "left", color = "#000000", weight = px(2)),
+  locations = cells_column_labels(columns = everything())
+  ) |> 
+  tab_style(
+    style = cell_borders(sides = "right", style = "hidden"),
+    locations = cells_column_spanners("Year")
+    ) 
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  opt_table_lines("none") |> 
+  tab_style(
+  style = cell_borders(sides = "left", color = "#000000", weight = px(2)),
+  locations = cells_column_labels(columns = everything())
+  ) |> 
+  tab_style(
+    style = cell_borders(sides = "right", style = "hidden"),
+    locations = cells_column_spanners("Year")
+    ) 
+```
+:::
+:::
+
+### Column cells
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  opt_table_lines("none") |> 
+  tab_style(
+  style = cell_borders(sides = "left", color = "#000000", weight = px(2)),
+  locations = list(
+    cells_body(columns = `2022`),
+    cells_summary(columns = `2022`))
+  )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  opt_table_lines("none") |> 
+  tab_style(
+  style = cell_borders(sides = "left", color = "#000000", weight = px(2)),
+  locations = list(
+    cells_body(columns = `2022`),
+    cells_summary(columns = `2022`))
+  )
+```
+:::
+:::
+
+### Specific row cells
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  opt_table_lines("none") |> 
+  tab_style(
+    style = cell_borders(sides = "bottom", color = "#000000", weight = px(2)),
+    locations = cells_body(rows = country_name == "United Arab Emirates")
+    )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  opt_table_lines("none") |> 
+  tab_style(
+    style = cell_borders(sides = "bottom", color = "#000000", weight = px(2)),
+    locations = cells_body(rows = country_name == "United Arab Emirates")
+    )
+```
+:::
+:::
+
+### Table
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  opt_table_lines("none") |> 
+  tab_options(
+    heading.border.lr.style = "hidden",
+    heading.border.bottom.style = "solid",
+    heading.border.bottom.width = px(2),
+    heading.border.bottom.color = "#000000",
+    table.border.left.style = "solid",
+    table.border.left.width = px(2),
+    table.border.left.color = "#000000",
+    table.border.right.style = "solid",
+    table.border.right.width = px(2),
+    table.border.right.color = "#000000",
+    table.border.bottom.color = "#000000",
+    table.border.bottom.style = "solid",
+    table.border.bottom.width = px(2),
+  )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  opt_table_lines("none") |> 
+  tab_options(
+    heading.border.lr.style = "hidden",
+    heading.border.bottom.style = "solid",
+    heading.border.bottom.width = px(2),
+    heading.border.bottom.color = "#000000",
+    table.border.left.style = "solid",
+    table.border.left.width = px(2),
+    table.border.left.color = "#000000",
+    table.border.right.style = "solid",
+    table.border.right.width = px(2),
+    table.border.right.color = "#000000",
+    table.border.bottom.color = "#000000",
+    table.border.bottom.style = "solid",
+    table.border.bottom.width = px(2),
+  )
+```
+:::
+:::
+:::
+
+## Highlighting
+::: {.panel-tabset}
+### Single value
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  tab_style(
+        style = cell_text(color = "red", weight = "bold"),
+        locations = cells_body(columns = change, 
+                               rows = change == min(change))
+        )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  tab_style(
+        style = cell_text(color = "red", weight = "bold"),
+        locations = cells_body(columns = change, 
+                               rows = change == min(change))
+        )
+```
+:::
+:::
+
+### Set of values
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(color = "seagreen", weight = "bold"),
+    locations = list(cells_stub(rows = change >= 0.4),
+                     cells_body(rows = change >= 0.4))
+  )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(color = "seagreen", weight = "bold"),
+    locations = list(cells_stub(rows = change >= 0.4),
+                     cells_body(rows = change >= 0.4))
+  )
+```
+:::
+:::
+:::
+
+## Download button
+::: grid
+::: g-col-6
+```{r}
+#| eval: FALSE
+library(downloadthis)
+tbl |> 
+  tab_source_note(
+    df |> 
+      download_this(
+        output_name = "tbl-17",
+        output_extension = ".csv",
+        csv2 = FALSE,
+        button_label = "Download CSV",
+        button_type = "default"
+      )
+  )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+library(downloadthis)
+tbl |> 
+  tab_source_note(
+    df |> 
+      download_this(
+        output_name = "tbl-17",
+        output_extension = ".csv",
+        csv2 = FALSE,
+        button_label = "Download CSV",
+        button_type = "default"
+      )
+  )
+```
+:::
+:::
