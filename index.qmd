@@ -13,7 +13,7 @@ format:
       body-width: 900px
       margin-width: 300px
       gutter-width: 1.5rem
-    theme: lux
+    theme: minty
 execute: 
   message: false
   warning: false
@@ -21,19 +21,44 @@ editor_options:
   chunk_output_type: console
 ---
 
-```{r}
-#| label: load-packages
-#| include: FALSE
+This page shows some of the ways that you can style tables created using the [**`gt`**](https://gt.rstudio.com) R package.
 
-library(tidyverse) ; library(gt)
+A **`gt`** table can be styled using the [`tab_styles()`](https://gt.rstudio.com/reference/tab_style.html), [`tab_options()`](https://gt.rstudio.com/reference/tab_options.html) or [`opt_stylize()`](https://gt.rstudio.com/reference/opt_stylize.html) functions. However, you need to know where to target your styles before you can apply them. 
+
+Each **`gt`** table has a formal structure with clearly defined parts: a table header, stub and stub head, column labels, a table body and a table footer.
+
+```{r}
+#| label: fig-gt
+#| fig-align: left
+#| fig-cap: "Source: gt.rstudio.com"
+#| echo: FALSE
+knitr::include_graphics("https://gt.rstudio.com/reference/figures/gt_parts_of_a_table.svg")
 ```
 
+You can apply styles to part(s) of a **`gt`** table by passing `cell_*()` helper functions to the `style` and `locations` arguments of `tab_style()` For example, if you wanted to highlight the third column in a table you might run:
 
 ```{r}
-#| label: load-data
-#| echo: FALSE
+#| eval: FALSE
+df |> 
+  gt() |> 
+  tab_style(
+    style = cell_fill(color = "honeydew2"), # <1>
+    locations = cells_body(columns = 3) # <2>
+  )
+```
 
-df <- countrypops |> 
+1. where [`cell_fill()`](https://gt.rstudio.com/reference/cell_fill.html) is the style to apply and 
+2. [`cells_body()`](https://gt.rstudio.com/reference/cells_body.html) is the component of the table that you wish to target
+
+We will be applying different styles to a `gt` table that displays a cut of the [`countrypops`](https://gt.rstudio.com/reference/countrypops.html) dataset. The table includes row groupings and summary totals to help illustrate the different components that can be targeted.
+
+```{r}
+#| code-fold: TRUE
+#| code-summary: "Show the code to create the table"
+
+library(tidyverse) ; library(gt)
+
+tbl <- countrypops |> 
   filter(country_code_3 %in% c("DZA","BHR","COM","DJI","EGY","IRQ","JOR","KWT",
                                "LBN","LBY","MRT","MAR","OMN","PSE","QAT","SAU",
                                "SOM","SDN","SYR","TUN","ARE","YEM")) |>
@@ -49,17 +74,7 @@ df <- countrypops |>
   ),
   change = (`2022`-`2012`)/`2012`) |> 
   relocate(government, .after = country_name) |> 
-  arrange(desc(change))
-```
-
-This document shows some of the ways that you can format and style tables created using the [**`gt`**](https://gt.rstudio.com) R package.
-
-```{r}
-#| label: tbl-unstyled
-#| tbl-cap: "Unstyled"
-#| include: FALSE
-
-tbl <- df |> 
+  arrange(desc(change)) |> 
   gt(rowname_col = "country_name",
      groupname_col = "government") |> 
   tab_stubhead(label = "Government type") |>
@@ -89,24 +104,12 @@ tbl <- df |>
     fmt = ~ fmt_percent(., decimals = 1)
   ) |> 
   tab_header(title = "Population of countries belonging to the League of Arab States") |> 
-  #opt_table_lines("none") |> 
   tab_options(
     table.font.size = px(10),
-    data_row.padding = px(2)
-    )
+    heading.title.font.size = px(12)
+    ) |> 
+  opt_vertical_padding(scale = 0.3)
 ```
-
-**`gt`** tables have a clearly articulated structure as shown in the syntax used in @fig-gt.
-
-```{r}
-#| label: fig-gt
-#| fig-align: left
-#| fig-cap: "Source: gt.rstudio.com"
-#| echo: FALSE
-knitr::include_graphics("https://gt.rstudio.com/reference/figures/gt_parts_of_a_table.svg")
-```
-
-A **`gt`** table can be styled by targeting parts such as the **Spanner** or **Stubhead** by using the corresponding [`helper` functions](https://gt.rstudio.com/reference/index.html#helper-functions). We will generally apply formatting and styles to these table `locations` using the [`tab_style()`](https://gt.rstudio.com/reference/tab_style.html) or [`tab_options()`](https://gt.rstudio.com/reference/tab_options.html) functions.
 
 ## Typeface
 
@@ -114,6 +117,8 @@ A **`gt`** table can be styled by targeting parts such as the **Spanner** or **S
 ### Title
 ::: grid
 ::: g-col-6
+Apply a [Google Font](https://fonts.google.com/specimen/Walter+Turncoat) to the table title. 
+
 ```{r}
 #| eval: FALSE
 tbl |> 
@@ -145,14 +150,14 @@ tbl |>
 ### Column labels
 ::: grid
 ::: g-col-6
+Apply a [Google Font](https://fonts.google.com/specimen/Merriweather) to all the column labels and change the size.
 ```{r}
 #| eval: FALSE
 tbl |> 
   tab_style(
     style = cell_text(
-      font = google_font("Playfair"), 
-      weight = "bold",
-      size = px(20)
+      font = google_font("Merriweather"), 
+      size = px(10)
       ),
     locations = cells_column_labels(everything())
   )
@@ -165,9 +170,8 @@ tbl |>
 tbl |> 
   tab_style(
     style = cell_text(
-      font = google_font("Playfair"), 
-      weight = "bold",
-      size = px(20)
+      font = google_font("Merriweather"), 
+      size = px(10)
       ),
     locations = cells_column_labels(everything())
   )
@@ -178,6 +182,7 @@ tbl |>
 ### Cells
 ::: grid
 ::: g-col-6
+Apply a [Google Font](https://fonts.google.com/specimen/Roboto+Mono) to all the table cells.
 ```{r}
 #| eval: FALSE
 tbl |> 
@@ -205,10 +210,11 @@ tbl |>
 ### Table
 ::: grid
 ::: g-col-6
+Apply a [themed set of fonts](https://gt.rstudio.com/reference/system_fonts.html) to the entire table.
 ```{r}
 #| eval: FALSE
 tbl |> 
-  opt_table_font(font = google_font("Source Sans Pro"))
+  opt_table_font(stack = "rounded-sans")
 ```
 :::
   
@@ -216,7 +222,7 @@ tbl |>
 ```{r}
 #| echo: FALSE
 tbl |> 
-  opt_table_font(font = google_font("Source Sans Pro"))
+  opt_table_font(stack = "rounded-sans")
 ```
 :::
 :::
@@ -228,6 +234,7 @@ tbl |>
 ### Stub head label
 ::: grid
 ::: g-col-6
+Set the stub head label weight to bold.
 ```{r}
 #| eval: FALSE
 tbl |> 
@@ -253,6 +260,7 @@ tbl |>
 ### Row group labels
 ::: grid
 ::: g-col-6
+Set the row group label weight to bold.
 ```{r}
 #| eval: FALSE
 tbl |> 
@@ -272,11 +280,12 @@ tbl |>
 ### Column labels
 ::: grid
 ::: g-col-6
+Set the column label weight to bold.
 ```{r}
 #| eval: FALSE
 tbl |> 
   tab_style(
-    style = cell_text(style = "italic"),
+    style = cell_text(weight = "bold"),
     locations = cells_column_labels(columns = everything())
   )
 ```
@@ -287,7 +296,7 @@ tbl |>
 #| echo: FALSE
 tbl |> 
   tab_style(
-    style = cell_text(style = "italic"),
+    style = cell_text(weight = "bold"),
     locations = cells_column_labels(columns = everything())
   )
 ```
@@ -297,11 +306,12 @@ tbl |>
 ### Spanner labels
 ::: grid
 ::: g-col-6
+Set the spanner label weight to bold.
 ```{r}
 #| eval: FALSE
 tbl |> 
   tab_style(
-    style = cell_text(color =	"#756bb1", weight = "bold"),
+    style = cell_text(weight = "bold"),
     locations = cells_column_spanners()
   )
 ```
@@ -312,7 +322,7 @@ tbl |>
 #| echo: FALSE
 tbl |> 
   tab_style(
-    style = cell_text(color =	"#756bb1", weight = "bold"),
+    style = cell_text(weight = "bold"),
     locations = cells_column_spanners()
   )
 ```
@@ -322,6 +332,7 @@ tbl |>
 ### Column and spanner labels
 ::: grid
 ::: g-col-6
+Set the column and spanner label weight to bold.
 ```{r}
 #| eval: FALSE
 tbl |> 
@@ -341,6 +352,7 @@ tbl |>
 ### Cells
 ::: grid
 ::: g-col-6
+Set the table cell weight to bold.
 ```{r}
 #| eval: FALSE
 tbl |> 
@@ -366,6 +378,7 @@ tbl |>
 ### Summary row
 ::: grid
 ::: g-col-6
+Set the summary row weight to bold.
 ```{r}
 #| eval: FALSE
 tbl |> 
@@ -393,6 +406,7 @@ tbl |>
 ### Grand Summary row
 ::: grid
 ::: g-col-6
+Set the grand summary weight to bold.
 ```{r}
 #| eval: FALSE
 tbl |>  
@@ -413,59 +427,6 @@ tbl |>
     locations = list(cells_stub_grand_summary(),
                      cells_grand_summary())
     )
-```
-:::
-:::
-:::
-
-## Alignment
-::: {.panel-tabset}
-### Stub head label
-::: grid
-::: g-col-6
-```{r}
-#| eval: FALSE
-tbl |> 
-  tab_style(
-    style = cell_text(align = "center", v_align = "middle"),
-    locations = cells_stubhead()
-  )
-```
-:::
-  
-::: g-col-6
-```{r}
-#| echo: FALSE
-tbl |> 
-  tab_style(
-    style = cell_text(align = "center", v_align = "middle"),
-    locations = cells_stubhead()
-  )
-```
-:::
-:::
-
-### Column label
-::: grid
-::: g-col-6
-```{r}
-#| eval: FALSE
-tbl |> 
-  tab_style(
-    style = cell_text(align = "center"),
-    locations = cells_column_labels(columns = everything())
-    )
-```
-:::
-  
-::: g-col-6
-```{r}
-#| echo: FALSE
-tbl |> 
-  tab_style(
-    style = cell_text(align = "center"),
-    locations = cells_column_labels(columns = everything())
-  )
 ```
 :::
 :::
@@ -476,6 +437,7 @@ tbl |>
 ### Column
 ::: grid
 ::: g-col-6
+Adjust the width of the `country_name` column and fix the other columns to the same width.
 ```{r}
 #| eval: FALSE
 tbl |> 
@@ -501,6 +463,7 @@ tbl |>
 ### Table
 ::: grid
 ::: g-col-6
+Reduce the width of the table to 50%.
 ```{r}
 #| eval: FALSE
 tbl |> 
@@ -522,11 +485,119 @@ tbl |>
 :::
 :::
 
+## Alignment
+::: {.panel-tabset}
+### Stub head label
+::: grid
+::: g-col-6
+Align the stub head label to the centre and vertically align it to the middle.
+```{r}
+#| eval: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(align = "center", v_align = "middle"),
+    locations = cells_stubhead()
+  )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(align = "center", v_align = "middle"),
+    locations = cells_stubhead()
+  )
+```
+:::
+:::
+
+### Column label
+::: grid
+::: g-col-6
+Centre align all of the column labels
+```{r}
+#| eval: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(align = "center"),
+    locations = cells_column_labels(columns = everything())
+    )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(align = "center"),
+    locations = cells_column_labels(columns = everything())
+  )
+```
+:::
+:::
+
+### Spanner column label
+::: grid
+::: g-col-6
+Left align the column spanner label.
+```{r}
+#| eval: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(align = "left"),
+    locations = cells_column_spanners(spanners = "Year")
+    )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(align = "left"),
+    locations = cells_column_spanners(spanners = "Year")
+    )
+```
+:::
+:::
+
+### Row names
+::: grid
+::: g-col-6
+Right align the row names
+```{r}
+#| eval: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(align = "right"),
+    locations = cells_stub()
+  )
+```
+:::
+  
+::: g-col-6
+```{r}
+#| echo: FALSE
+tbl |> 
+  tab_style(
+    style = cell_text(align = "right"),
+    locations = cells_stub()
+  )
+```
+:::
+:::
+:::
+
 ## Borders
 ::: {.panel-tabset}
 ### Stub
 ::: grid
 ::: g-col-6
+Add a border to the define the end of the stub
 ```{r}
 #| eval: FALSE
 tbl |> 
@@ -556,6 +627,7 @@ tbl |>
 ### Row group
 ::: grid
 ::: g-col-6
+Add a horizontal border separating each row group
 ```{r}
 #| eval: FALSE
 tbl |> 
@@ -583,6 +655,7 @@ tbl |>
 ### Column labels
 ::: grid
 ::: g-col-6
+Separate each column label with a border
 ```{r}
 #| eval: FALSE
 tbl |> 
@@ -618,15 +691,17 @@ tbl |>
 ### Column cells
 ::: grid
 ::: g-col-6
+Add a border to the left edge of the `2022` column
 ```{r}
 #| eval: FALSE
 tbl |> 
   opt_table_lines("none") |> 
   tab_style(
-  style = cell_borders(sides = "left", color = "#000000", weight = px(2)),
-  locations = list(
-    cells_body(columns = `2022`),
-    cells_summary(columns = `2022`))
+    style = cell_borders(sides = "left", color = "#000000", weight = px(2)),
+    locations = list(
+      cells_body(columns = `2022`),
+      cells_summary(columns = `2022`),
+      cells_summary(columns = `2022`))
   )
 ```
 :::
@@ -637,10 +712,11 @@ tbl |>
 tbl |> 
   opt_table_lines("none") |> 
   tab_style(
-  style = cell_borders(sides = "left", color = "#000000", weight = px(2)),
-  locations = list(
-    cells_body(columns = `2022`),
-    cells_summary(columns = `2022`))
+    style = cell_borders(sides = "left", color = "#000000", weight = px(2)),
+    locations = list(
+      cells_body(columns = `2022`),
+      cells_summary(columns = `2022`),
+      cells_summary(columns = `2022`))
   )
 ```
 :::
@@ -649,6 +725,7 @@ tbl |>
 ### Specific row cells
 ::: grid
 ::: g-col-6
+Add a horizontal border to a specific row of values
 ```{r}
 #| eval: FALSE
 tbl |> 
@@ -676,6 +753,7 @@ tbl |>
 ### Table
 ::: grid
 ::: g-col-6
+Add an outline to the table
 ```{r}
 #| eval: FALSE
 tbl |> 
@@ -728,13 +806,14 @@ tbl |>
 ### Single value
 ::: grid
 ::: g-col-6
+Highlight the largest percentage change in population between 2012 and 2022.
 ```{r}
 #| eval: FALSE
 tbl |> 
   tab_style(
         style = cell_text(color = "red", weight = "bold"),
         locations = cells_body(columns = change, 
-                               rows = change == min(change))
+                               rows = change == max(change))
         )
 ```
 :::
@@ -746,7 +825,7 @@ tbl |>
   tab_style(
         style = cell_text(color = "red", weight = "bold"),
         locations = cells_body(columns = change, 
-                               rows = change == min(change))
+                               rows = change == max(change))
         )
 ```
 :::
@@ -755,13 +834,15 @@ tbl |>
 ### Set of values
 ::: grid
 ::: g-col-6
+Highlight rows where the population change was 30% or greater.
 ```{r}
 #| eval: FALSE
 tbl |> 
   tab_style(
-    style = cell_text(color = "seagreen", weight = "bold"),
-    locations = list(cells_stub(rows = change >= 0.4),
-                     cells_body(rows = change >= 0.4))
+    style = list(cell_fill(color = "#3182bd", alpha = 0.8),
+                 cell_text(color = "white")),
+    locations = list(cells_stub(rows = change >= 0.3),
+                     cells_body(rows = change >= 0.3))
   )
 ```
 :::
@@ -771,50 +852,12 @@ tbl |>
 #| echo: FALSE
 tbl |> 
   tab_style(
-    style = cell_text(color = "seagreen", weight = "bold"),
-    locations = list(cells_stub(rows = change >= 0.4),
-                     cells_body(rows = change >= 0.4))
+    style = list(cell_fill(color = "#3182bd", alpha = 0.8),
+                 cell_text(color = "white")),
+    locations = list(cells_stub(rows = change >= 0.3),
+                     cells_body(rows = change >= 0.3))
   )
 ```
 :::
-:::
-:::
-
-## Download button
-::: grid
-::: g-col-6
-```{r}
-#| eval: FALSE
-library(downloadthis)
-tbl |> 
-  tab_source_note(
-    df |> 
-      download_this(
-        output_name = "tbl-17",
-        output_extension = ".csv",
-        csv2 = FALSE,
-        button_label = "Download CSV",
-        button_type = "default"
-      )
-  )
-```
-:::
-  
-::: g-col-6
-```{r}
-#| echo: FALSE
-library(downloadthis)
-tbl |> 
-  tab_source_note(
-    df |> 
-      download_this(
-        output_name = "tbl-17",
-        output_extension = ".csv",
-        csv2 = FALSE,
-        button_label = "Download CSV",
-        button_type = "default"
-      )
-  )
-```
 :::
 :::
